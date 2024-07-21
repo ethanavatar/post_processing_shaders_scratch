@@ -52,6 +52,12 @@ chromatic_aberration : raylib.Shader
 offset : raylib.Vector3
 offset_location : i32
 
+grayscale_enabled := false
+grayscale : raylib.Shader
+color_diffuse : raylib.Vector4
+color_diffuse_location : i32
+
+
 draw_game_canvas :: proc() {
     raylib.ClearBackground(raylib.RAYWHITE)
 
@@ -81,6 +87,18 @@ draw_game_canvas :: proc() {
             )
         }
     raylib.EndShaderMode()
+
+    raylib.BeginShaderMode(grayscale)
+        if grayscale_enabled {
+            raylib.SetShaderValue(grayscale, color_diffuse_location, &color_diffuse, raylib.ShaderUniformDataType.VEC4)
+            raylib.DrawTextureRec(
+                canvas_texture.texture,
+                raylib.Rectangle{0, 0, cast(f32)canvas_width, -cast(f32)canvas_height},
+                raylib.Vector2{0, 0},
+                raylib.WHITE,
+            )
+        }
+    raylib.EndShaderMode()
 }
 
 float_to_cstring :: proc(f : f32, buffer : []u8) -> cstring {
@@ -101,19 +119,17 @@ main :: proc() {
     window_texture = raylib.LoadRenderTexture(initial_width, initial_height)
     defer raylib.UnloadRenderTexture(window_texture)
 
-    chromatic_aberration = raylib.LoadShader(
-        // Vertex shader.
-        // Nothing, because its a post-processing effect
-        nil,
-
-        // Fragment shader
-        // uniform vec3 offset;
-        "chromatic_aberration.frag",
-    )
+    chromatic_aberration = raylib.LoadShader(nil, "chromatic_aberration.frag")
     defer raylib.UnloadShader(chromatic_aberration)
 
     offset = raylib.Vector3{0.009, 0.006, -0.006}
     offset_location = raylib.GetShaderLocation(chromatic_aberration, "offset")
+
+    grayscale = raylib.LoadShader(nil, "grayscale.frag")
+    defer raylib.UnloadShader(grayscale)
+
+    color_diffuse = raylib.Vector4{0.5, 0.5, 0.5, 1}
+    color_diffuse_location = raylib.GetShaderLocation(grayscale, "colorDiffuse")
 
     for should_close == false && raylib.WindowShouldClose() == false {
         if raylib.IsKeyPressed(raylib.KeyboardKey.TAB) {
@@ -190,6 +206,44 @@ main :: proc() {
                     raylib.Rectangle{100, 130, 200, 20},
                     "Chromatic Aberration",
                     &chromatic_aberration_enabled,
+                )
+
+                raylib.GuiSliderBar(
+                    raylib.Rectangle{100, 190, 200, 20},
+                    "Diffuse Red",
+                    float_to_cstring(color_diffuse.x, text_buffer[:]),
+                    &color_diffuse.y,
+                    0, 1,
+                )
+
+                raylib.GuiSliderBar(
+                    raylib.Rectangle{100, 220, 200, 20},
+                    "Diffuse Green",
+                    float_to_cstring(color_diffuse.y, text_buffer[:]),
+                    &color_diffuse.z,
+                    0, 1,
+                )
+
+                raylib.GuiSliderBar(
+                    raylib.Rectangle{100, 250, 200, 20},
+                    "Diffuse Blue",
+                    float_to_cstring(color_diffuse.z, text_buffer[:]),
+                    &color_diffuse.w,
+                    0, 1,
+                )
+
+                raylib.GuiSliderBar(
+                    raylib.Rectangle{100, 280, 200, 20},
+                    "Diffuse Alpha",
+                    float_to_cstring(color_diffuse.w, text_buffer[:]),
+                    &color_diffuse.w,
+                    0, 1,
+                )
+
+                raylib.GuiToggle(
+                    raylib.Rectangle{100, 310, 200, 20},
+                    "Grayscale",
+                    &grayscale_enabled,
                 )
             }
 
