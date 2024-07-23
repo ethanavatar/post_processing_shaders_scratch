@@ -17,7 +17,7 @@ game_state := GameState.Playing
 initial_width :: 1200
 initial_height :: 800
 
-canvas_scale :: 0.5
+canvas_scale :: 1.0
 canvas_width :: cast(i32)(initial_width * canvas_scale)
 canvas_height :: cast(i32)(initial_height * canvas_scale)
 
@@ -35,7 +35,7 @@ canvas_dest := raylib.Rectangle{
 }
 
 camera := raylib.Camera3D{
-    position = raylib.Vector3{10, 10, 10},
+    position = raylib.Vector3{10, 2.5, 10},
     target = raylib.Vector3{0, 0, 0},
     up = raylib.Vector3{0, 1, 0},
     fovy = 45,
@@ -47,6 +47,8 @@ red_cube_position := raylib.Vector3{3, 1, 2}
 green_cube_position := raylib.Vector3{-3, 1, 0}
 blue_cube_position := raylib.Vector3{0, 1, -3}
 
+black_wall_position := raylib.Vector3{-5, 0, -2.5}
+
 chromatic_aberration_enabled := false
 chromatic_aberration : raylib.Shader
 offset : raylib.Vector3
@@ -57,11 +59,13 @@ grayscale : raylib.Shader
 color_diffuse : raylib.Vector4
 color_diffuse_location : i32
 
+bloom_enabled := false
+bloom : raylib.Shader
 
 draw_game_canvas :: proc() {
     raylib.ClearBackground(raylib.RAYWHITE)
 
-    raylib.BeginMode3D(camera)
+    raylib.BeginMode3D(camera);
         raylib.DrawGrid(10, 1)
         raylib.DrawCube(gray_cube_position, 2, 2, 2, raylib.GRAY)
         raylib.DrawCubeWires(gray_cube_position, 2, 2, 2, raylib.LIGHTGRAY)
@@ -74,22 +78,12 @@ draw_game_canvas :: proc() {
 
         raylib.DrawCube(blue_cube_position, 1, 1, 1, raylib.BLUE)
         raylib.DrawCubeWires(blue_cube_position, 1, 1, 1, raylib.DARKBLUE)
+
+        raylib.DrawCube(black_wall_position, 1, 10, 20, raylib.BLACK)
     raylib.EndMode3D()
 
-    raylib.BeginShaderMode(chromatic_aberration)
-        if chromatic_aberration_enabled {
-            raylib.SetShaderValue(chromatic_aberration, offset_location, &offset, raylib.ShaderUniformDataType.VEC3)
-            raylib.DrawTextureRec(
-                canvas_texture.texture,
-                raylib.Rectangle{0, 0, cast(f32)canvas_width, -cast(f32)canvas_height},
-                raylib.Vector2{0, 0},
-                raylib.WHITE,
-            )
-        }
-    raylib.EndShaderMode()
-
-    raylib.BeginShaderMode(grayscale)
-        if grayscale_enabled {
+    if grayscale_enabled {
+        raylib.BeginShaderMode(grayscale)
             raylib.SetShaderValue(grayscale, color_diffuse_location, &color_diffuse, raylib.ShaderUniformDataType.VEC4)
             raylib.DrawTextureRec(
                 canvas_texture.texture,
@@ -97,14 +91,32 @@ draw_game_canvas :: proc() {
                 raylib.Vector2{0, 0},
                 raylib.WHITE,
             )
-        }
-    raylib.EndShaderMode()
-}
+        raylib.EndShaderMode()
+    }
 
-float_to_cstring :: proc(f : f32, buffer : []u8) -> cstring {
-    return strings.unsafe_string_to_cstring(
-        strconv.ftoa(buffer, cast(f64)f, 'f', 4, 32)
-    )
+    if chromatic_aberration_enabled {
+        raylib.BeginShaderMode(chromatic_aberration)
+            raylib.SetShaderValue(chromatic_aberration, offset_location, &offset, raylib.ShaderUniformDataType.VEC3)
+            raylib.DrawTextureRec(
+                canvas_texture.texture,
+                raylib.Rectangle{0, 0, cast(f32)canvas_width, -cast(f32)canvas_height},
+                raylib.Vector2{0, 0},
+                raylib.WHITE,
+            )
+        raylib.EndShaderMode()
+    }
+
+
+    if bloom_enabled {
+        raylib.BeginShaderMode(bloom)
+            raylib.DrawTextureRec(
+                canvas_texture.texture,
+                raylib.Rectangle{0, 0, cast(f32)canvas_width, -cast(f32)canvas_height},
+                raylib.Vector2{0, 0},
+                raylib.WHITE,
+            )
+        raylib.EndShaderMode()
+    }
 }
 
 main :: proc() {
@@ -131,6 +143,9 @@ main :: proc() {
     color_diffuse = raylib.Vector4{0.5, 0.5, 0.5, 1}
     color_diffuse_location = raylib.GetShaderLocation(grayscale, "colorDiffuse")
 
+    bloom = raylib.LoadShader(nil, "bloom.frag")
+    defer raylib.UnloadShader(bloom)
+
     for should_close == false && raylib.WindowShouldClose() == false {
         if raylib.IsKeyPressed(raylib.KeyboardKey.TAB) {
             if game_state == GameState.Playing {
@@ -153,7 +168,7 @@ main :: proc() {
         }
 
         if (game_state == GameState.Playing) {
-            raylib.UpdateCamera(&camera, raylib.CameraMode.FREE)
+            raylib.UpdateCamera(&camera, raylib.CameraMode.FIRST_PERSON)
         }
 
         if raylib.IsKeyPressed(raylib.KeyboardKey.X) {
@@ -244,6 +259,12 @@ main :: proc() {
                     raylib.Rectangle{100, 310, 200, 20},
                     "Grayscale",
                     &grayscale_enabled,
+                )
+
+                raylib.GuiToggle(
+                    raylib.Rectangle{100, 340, 200, 20},
+                    "Bloom",
+                    &bloom_enabled,
                 )
             }
 
