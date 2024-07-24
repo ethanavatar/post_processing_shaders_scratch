@@ -20,14 +20,14 @@ cstring_split_at :: proc(
     if n > len(cstr) { return cstr, "" }
     if n <= 0 { return "", cstr }
 
-    str := strings.string_from_ptr(transmute([^]u8)cstr, len(cstr))
+    len := len(cstr)
+    str := strings.string_from_ptr(transmute([^]u8)cstr, len)
     return strings.clone_to_cstring(str[0:n], allocator),
-           strings.clone_to_cstring(str[n:len(cstr)], allocator)
+           strings.clone_to_cstring(str[n:len], allocator)
 }
 
 cstring_insert_at :: proc(
-    cstr : cstring,
-    n : int,
+    cstr : cstring, n : int,
     insert : rune,
     allocator := context.allocator,
 ) -> cstring {
@@ -52,12 +52,20 @@ cstring_remove_at :: proc(
     if n >= len(cstr) || n < 0 { return cstr }
 
     front, b := cstring_split_at(cstr, n, allocator)
-    free(cast(rawptr)b, allocator)
+    defer free(cast(rawptr)front, allocator)
+    defer free(cast(rawptr)b, allocator)
 
     f, back := cstring_split_at(cstr, n + 1, allocator)
-    free(cast(rawptr)f, allocator)
+    defer free(cast(rawptr)f, allocator)
+    defer free(cast(rawptr)back, allocator)
 
-    return cstring_concat(front, back, allocator)
+    // NOTE: Passing the temp allocator to this return value would cause it to free at the end of the frame,
+    // but I actually want it to live much longer than that.
+
+    // Passing around allocators is cool 'n all, but in these utility functions, I'm kinda just using them wrong.
+    // An allocator should only need to be passed when I want to manage a lifetime outside the call-site.
+    // Otherwise, it can just be managed manually.
+    return cstring_concat(front, back)
 }
 
 cstring_concat :: proc(
