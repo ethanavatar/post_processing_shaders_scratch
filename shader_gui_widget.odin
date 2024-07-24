@@ -4,8 +4,8 @@ import "vendor:raylib"
 gui_draw_frag_shader_widget :: proc(
     shader : ^Shader,
     shader_name : string,
-) {
-    if shader == nil { return }
+) -> int {
+    if shader == nil { return 0; }
     text_buffer := [32]u8{}
 
     raylib.GuiSliderBar(
@@ -37,4 +37,14 @@ gui_draw_frag_shader_widget :: proc(
         "Chromatic Aberration",
         &chromatic_aberration_enabled,
     )
+    return 0;
 }
+
+/*
+gui_draw_uniform_widget :: proc(
+
+) -> int {
+    raylib.GuiTextBox(
+    )
+}
+*/

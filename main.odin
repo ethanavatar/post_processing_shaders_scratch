@@ -266,6 +266,13 @@ main :: proc() {
                     "Bloom",
                     &bloom_enabled,
                 )
+
+                t : cstring = "Hello, Sailor!"
+                gui_text_entry(
+                    raylib.Rectangle{100, 370, 200, 20},
+                    "Label",
+                    &t, 32,
+                )
             }
 
             if game_state == GameState.Paused {

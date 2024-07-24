@@ -4,6 +4,7 @@ import "vendor:raylib"
 SHADER_MAX_UNIFORMS :: 32
 
 ShaderUniform :: struct {
+    name : cstring,
     location : i32,
     value : rawptr,
     value_type : raylib.ShaderUniformDataType,
@@ -42,6 +43,7 @@ shader_add_uniform :: proc(
     value_type : raylib.ShaderUniformDataType,
 ) {
     uniform : ShaderUniform
+    uniform.name = name
     uniform.location = raylib.GetShaderLocation(shader.shader, name)
     uniform.value = value
     uniform.value_type = value_type
