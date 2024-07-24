@@ -146,6 +146,11 @@ main :: proc() {
     bloom = raylib.LoadShader(nil, "bloom.frag")
     defer raylib.UnloadShader(bloom)
 
+    te : TextEntry = {
+        body = "Hello, Sailor!",
+        is_focused = false,
+    } 
+
     for should_close == false && raylib.WindowShouldClose() == false {
         if raylib.IsKeyPressed(raylib.KeyboardKey.TAB) {
             if game_state == GameState.Playing {
@@ -267,11 +272,12 @@ main :: proc() {
                     &bloom_enabled,
                 )
 
-                t : cstring = "Hello, Sailor!"
-                gui_text_entry(
+                update_text_entry(
+                    &te,
                     raylib.Rectangle{100, 370, 200, 20},
                     "Label",
-                    &t, 32,
+                    10, 
+                    true,
                 )
             }
 
@@ -288,6 +294,8 @@ main :: proc() {
                 raylib.DrawText("Press X to quit", window_center_x - 200, window_center_y + 110 - 100, 20, raylib.GRAY)
             }
         } raylib.EndDrawing()
+
+        free_all(context.temp_allocator)
     }
 
     raylib.CloseWindow()
