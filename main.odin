@@ -150,6 +150,7 @@ main :: proc() {
         body = "Hello, Sailor!",
         is_focused = false,
     } 
+    defer free(cast(rawptr)te.body, context.allocator)
 
     for should_close == false && raylib.WindowShouldClose() == false {
         if raylib.IsKeyPressed(raylib.KeyboardKey.TAB) {

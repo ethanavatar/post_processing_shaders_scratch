@@ -61,57 +61,71 @@ update_text_entry :: proc(
         font_color,
     )
 
-    if element.is_focused {
-        cursor_x := x_offset + raylib.MeasureText(element.body, font_size)
-        _, after_cursor := cstring_split_at(element.body, cast(int)element.cursor_position, context.temp_allocator)
-        cursor_x -= raylib.MeasureText(after_cursor, font_size)
-        cursor_y := y_offset
+    if !element.is_focused {
+        return
+    }
 
-        if element.cursor_blink_timer < 0.5 {
-            raylib.DrawRectangle(cursor_x, cursor_y, 2, font_size, raylib.BLACK)
-        }
-        element.cursor_blink_timer += raylib.GetFrameTime()
-        if element.cursor_blink_timer > 1 {
-            element.cursor_blink_timer = 0
-        }
+    cursor_x := x_offset + raylib.MeasureText(element.body, font_size)
+    _, after_cursor := cstring_split_at(element.body, cast(int)element.cursor_position, context.temp_allocator)
+    cursor_x -= raylib.MeasureText(after_cursor, font_size)
+    cursor_y := y_offset
 
-        if raylib.IsKeyPressed(raylib.KeyboardKey.BACKSPACE) {
-            if element.cursor_position > 0 {
-                element.cursor_position -= 1
-                element.body = cstring_remove_at(element.body, cast(int)element.cursor_position, context.temp_allocator)
-            }
-        }
+    if element.cursor_blink_timer < 0.5 {
+        raylib.DrawRectangle(cursor_x, cursor_y, 2, font_size, raylib.BLACK)
+    }
+    element.cursor_blink_timer += raylib.GetFrameTime()
+    if element.cursor_blink_timer > 1 {
+        element.cursor_blink_timer = 0
+    }
 
-        if raylib.IsKeyPressed(raylib.KeyboardKey.RIGHT) {
-            if cast(int)element.cursor_position < len(element.body) {
-                element.cursor_position += 1
-            }
-        }
+    key : raylib.KeyboardKey = raylib.GetKeyPressed()
+    key_handler: #partial switch key {
+    case raylib.KeyboardKey.BACKSPACE: key_backspace(element)
+    case raylib.KeyboardKey.DELETE:    key_delete(element)
+    case raylib.KeyboardKey.RIGHT:     key_right(element)
+    case raylib.KeyboardKey.LEFT:      key_left(element)
+    case raylib.KeyboardKey.ENTER:     element.is_focused = false
+    }
 
-        if raylib.IsKeyPressed(raylib.KeyboardKey.LEFT) {
-            if element.cursor_position > 0 {
-                element.cursor_position -= 1
-            }
-        }
-
-        if raylib.IsKeyPressed(raylib.KeyboardKey.DELETE) {
-            if cast(int)element.cursor_position < len(element.body) {
-                element.body = cstring_remove_at(element.body, cast(int)element.cursor_position, context.temp_allocator)
-            }
-        }
-
-        if raylib.IsKeyPressed(raylib.KeyboardKey.ENTER) {
-            element.is_focused = false
-        }
-
-        key : rune = raylib.GetCharPressed()
-        if key != cast(rune)0 {
-            if rune_is_ascii(key) {
-                element.body = cstring_insert_at(element.body, cast(int)element.cursor_position, key, context.temp_allocator)
-                element.cursor_position += 1
-            }
-        }
-
+    char : rune = raylib.GetCharPressed()
+    char_handler: switch cast(i32)char {
+    case 0: break char_handler
+    case:
+        if !rune_is_ascii(char) { break char_handler }
+        element.body = cstring_insert_at(element.body, cast(int)element.cursor_position, char, context.allocator)
+        element.cursor_position += 1
     }
 }
 
+@(private)
+key_backspace :: proc(
+    element: ^TextEntry,
+) {
+    if element.cursor_position <= 0 { return }
+    element.cursor_position -= 1
+    element.body = cstring_remove_at(element.body, cast(int)element.cursor_position, context.allocator)
+}
+
+@(private)
+key_delete :: proc(
+    element: ^TextEntry,
+) {
+    if cast(int)element.cursor_position >= len(element.body) { return }
+    element.body = cstring_remove_at(element.body, cast(int)element.cursor_position, context.allocator)
+}
+
+@(private)
+key_right :: proc(
+    element: ^TextEntry,
+) {
+    if cast(int)element.cursor_position >= len(element.body) { return }
+    element.cursor_position += 1
+}
+
+@(private)
+key_left :: proc(
+    element: ^TextEntry,
+) {
+    if element.cursor_position <= 0 { return }
+    element.cursor_position -= 1
+}

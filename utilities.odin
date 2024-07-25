@@ -31,17 +31,17 @@ cstring_insert_at :: proc(
     insert : rune,
     allocator := context.allocator,
 ) -> cstring {
-    length := len(cstr)
     char := [1]rune{insert}
-    char_string := utf8.runes_to_string(char[:], allocator)
-    defer free(raw_data(char_string), allocator)
+    char_string := utf8.runes_to_string(char[:], context.allocator)
+    defer free(raw_data(char_string), context.allocator)
 
     cstr_insert := strings.unsafe_string_to_cstring(char_string)
-    if n > length { return cstring_concat(cstr, cstr_insert, allocator) }
+    if n > len(cstr) { return cstring_concat(cstr, cstr_insert, allocator) }
     if n <= 0 { return cstring_concat(cstr_insert, cstr, allocator) }
 
-    front, back := cstring_split_at(cstr, n, allocator)
-    return cstring_concat(cstring_concat(front, cstr_insert, allocator), back)
+    front, back := cstring_split_at(cstr, n, context.allocator)
+    front_concat := cstring_concat(front, cstr_insert, context.allocator)
+    return cstring_concat(front_concat, back, allocator)
 }
 
 cstring_remove_at :: proc(
@@ -51,21 +51,15 @@ cstring_remove_at :: proc(
 ) -> cstring {
     if n >= len(cstr) || n < 0 { return cstr }
 
-    front, b := cstring_split_at(cstr, n, allocator)
-    defer free(cast(rawptr)front, allocator)
-    defer free(cast(rawptr)b, allocator)
+    front, b := cstring_split_at(cstr, n, context.allocator)
+    defer free(cast(rawptr)front, context.allocator)
+    defer free(cast(rawptr)b, context.allocator)
 
-    f, back := cstring_split_at(cstr, n + 1, allocator)
-    defer free(cast(rawptr)f, allocator)
-    defer free(cast(rawptr)back, allocator)
+    f, back := cstring_split_at(cstr, n + 1, context.allocator)
+    defer free(cast(rawptr)f, context.allocator)
+    defer free(cast(rawptr)back, context.allocator)
 
-    // NOTE: Passing the temp allocator to this return value would cause it to free at the end of the frame,
-    // but I actually want it to live much longer than that.
-
-    // Passing around allocators is cool 'n all, but in these utility functions, I'm kinda just using them wrong.
-    // An allocator should only need to be passed when I want to manage a lifetime outside the call-site.
-    // Otherwise, it can just be managed manually.
-    return cstring_concat(front, back)
+    return cstring_concat(front, back, allocator)
 }
 
 cstring_concat :: proc(
@@ -74,6 +68,7 @@ cstring_concat :: proc(
     allocator := context.allocator
 ) -> cstring {
     s := [?]string{string(a), string(b)}
-    concatenated := strings.concatenate(s[:], allocator)
-    return strings.unsafe_string_to_cstring(concatenated)
+    return strings.unsafe_string_to_cstring(
+        strings.concatenate(s[:], allocator)
+    )
 }
