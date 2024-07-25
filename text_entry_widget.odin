@@ -8,7 +8,6 @@ TextEntry :: struct {
     is_focused: bool,
     cursor_position: i32,
     cursor_blink_timer: f32,
-    //key_repeat_timer: f32, // TODO: Implement key repeat
 }
 
 update_text_entry :: proc(
@@ -57,8 +56,7 @@ update_text_entry :: proc(
     raylib.DrawText(
         element.body,
         x_offset, y_offset,
-        font_size,
-        font_color,
+        font_size, font_color,
     )
 
     if !element.is_focused {
@@ -73,12 +71,13 @@ update_text_entry :: proc(
     if element.cursor_blink_timer < 0.5 {
         raylib.DrawRectangle(cursor_x, cursor_y, 2, font_size, raylib.BLACK)
     }
+
     element.cursor_blink_timer += raylib.GetFrameTime()
     if element.cursor_blink_timer > 1 {
         element.cursor_blink_timer = 0
     }
 
-    key : raylib.KeyboardKey = raylib.GetKeyPressed()
+    key : raylib.KeyboardKey = get_key_pressed_with_repeats()
     key_handler: #partial switch key {
     case raylib.KeyboardKey.BACKSPACE: key_backspace(element)
     case raylib.KeyboardKey.DELETE:    key_delete(element)
@@ -91,34 +90,56 @@ update_text_entry :: proc(
     char_handler: switch cast(i32)char {
     case 0: break char_handler
     case:
-        if !rune_is_ascii(char) { break char_handler }
-        element.body = cstring_insert_at(element.body, cast(int)element.cursor_position, char, context.allocator)
+        if !rune_is_ascii(char) {
+            break char_handler
+        }
+        element.body = cstring_insert_at(
+            element.body,
+            cast(int)element.cursor_position,
+            char,
+            context.allocator
+        )
         element.cursor_position += 1
     }
 }
 
+// BUG: Can't delete the first character in the string
 @(private)
 key_backspace :: proc(
     element: ^TextEntry,
 ) {
-    if element.cursor_position <= 0 { return }
+    if element.cursor_position <= 0 {
+        return
+    }
     element.cursor_position -= 1
-    element.body = cstring_remove_at(element.body, cast(int)element.cursor_position, context.allocator)
+    element.body = cstring_remove_at(
+        element.body,
+        cast(int)element.cursor_position,
+        context.allocator
+    )
 }
 
 @(private)
 key_delete :: proc(
     element: ^TextEntry,
 ) {
-    if cast(int)element.cursor_position >= len(element.body) { return }
-    element.body = cstring_remove_at(element.body, cast(int)element.cursor_position, context.allocator)
+    if cast(int)element.cursor_position >= len(element.body) {
+        return
+    }
+    element.body = cstring_remove_at(
+        element.body,
+        cast(int)element.cursor_position,
+        context.allocator
+    )
 }
 
 @(private)
 key_right :: proc(
     element: ^TextEntry,
 ) {
-    if cast(int)element.cursor_position >= len(element.body) { return }
+    if cast(int)element.cursor_position >= len(element.body) {
+        return
+    }
     element.cursor_position += 1
 }
 
@@ -126,6 +147,8 @@ key_right :: proc(
 key_left :: proc(
     element: ^TextEntry,
 ) {
-    if element.cursor_position <= 0 { return }
+    if element.cursor_position <= 0 {
+        return
+    }
     element.cursor_position -= 1
 }
