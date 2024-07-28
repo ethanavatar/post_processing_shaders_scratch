@@ -10,13 +10,13 @@ TextEntry :: struct {
     cursor_blink_timer: f32,
 }
 
-update_text_entry :: proc(
+draw_text_entry :: proc(
     element: ^TextEntry,
     bounds: raylib.Rectangle,
     label: cstring,
     font_size: i32,
     centered: bool,
-) {
+) -> raylib.Vector2 {
     half_font_size := font_size / 2
     label_bounds := bounds
     label_bounds.x -= cast(f32)(raylib.MeasureText(label, font_size) + half_font_size)
@@ -60,7 +60,10 @@ update_text_entry :: proc(
     )
 
     if !element.is_focused {
-        return
+        return raylib.Vector2{
+            bounds.x + bounds.width,
+            bounds.y + bounds.height,
+        }
     }
 
     cursor_x := x_offset + raylib.MeasureText(element.body, font_size)
@@ -90,9 +93,7 @@ update_text_entry :: proc(
     char_handler: switch cast(i32)char {
     case 0: break char_handler
     case:
-        if !rune_is_ascii(char) {
-            break char_handler
-        }
+        if !rune_is_ascii(char) { break char_handler }
         element.body = cstring_insert_at(
             element.body,
             cast(int)element.cursor_position,
@@ -101,16 +102,18 @@ update_text_entry :: proc(
         )
         element.cursor_position += 1
     }
+
+    return raylib.Vector2{
+        bounds.x + bounds.width,
+        bounds.y + bounds.height,
+    }
 }
 
-// BUG: Can't delete the first character in the string
 @(private)
 key_backspace :: proc(
     element: ^TextEntry,
 ) {
-    if element.cursor_position <= 0 {
-        return
-    }
+    if element.cursor_position <= 0 { return }
     element.cursor_position -= 1
     element.body = cstring_remove_at(
         element.body,
@@ -123,9 +126,7 @@ key_backspace :: proc(
 key_delete :: proc(
     element: ^TextEntry,
 ) {
-    if cast(int)element.cursor_position >= len(element.body) {
-        return
-    }
+    if cast(int)element.cursor_position >= len(element.body) { return }
     element.body = cstring_remove_at(
         element.body,
         cast(int)element.cursor_position,
@@ -137,9 +138,7 @@ key_delete :: proc(
 key_right :: proc(
     element: ^TextEntry,
 ) {
-    if cast(int)element.cursor_position >= len(element.body) {
-        return
-    }
+    if cast(int)element.cursor_position >= len(element.body) { return }
     element.cursor_position += 1
 }
 
@@ -147,8 +146,6 @@ key_right :: proc(
 key_left :: proc(
     element: ^TextEntry,
 ) {
-    if element.cursor_position <= 0 {
-        return
-    }
+    if element.cursor_position <= 0 { return }
     element.cursor_position -= 1
 }

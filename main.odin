@@ -121,6 +121,8 @@ draw_game_canvas :: proc() {
 
 main :: proc() {
     raylib.InitWindow(initial_width, initial_height, game_title)
+    defer raylib.CloseWindow()
+
     raylib.SetTargetFPS(60)
     raylib.SetExitKey(nil)
     raylib.DisableCursor()
@@ -145,12 +147,6 @@ main :: proc() {
 
     bloom = raylib.LoadShader(nil, "bloom.frag")
     defer raylib.UnloadShader(bloom)
-
-    te : TextEntry = {
-        body = "Hello, Sailor!",
-        is_focused = false,
-    } 
-    defer free(cast(rawptr)te.body, context.allocator)
 
     for should_close == false && raylib.WindowShouldClose() == false {
         if raylib.IsKeyPressed(raylib.KeyboardKey.TAB) {
@@ -177,7 +173,7 @@ main :: proc() {
             raylib.UpdateCamera(&camera, raylib.CameraMode.FIRST_PERSON)
         }
 
-        if raylib.IsKeyPressed(raylib.KeyboardKey.X) {
+        if raylib.IsKeyPressed(raylib.KeyboardKey.Q) && raylib.IsKeyDown(raylib.KeyboardKey.LEFT_CONTROL) {
             should_close = true
         }
         
@@ -196,90 +192,7 @@ main :: proc() {
             )
 
             if game_state == GameState.Editing {
-                raylib.DrawText("Editing", 10, 10, 20, raylib.GRAY)
-                text_buffer := [32]u8{}
-                
-                raylib.GuiSliderBar(
-                    raylib.Rectangle{100, 40, 200, 20},
-                    "Red offset",
-                    float_to_cstring(offset.x, text_buffer[:]),
-                    &offset.x,
-                    -0.1, 0.1,
-                )
-
-                raylib.GuiSliderBar(
-                    raylib.Rectangle{100, 70, 200, 20},
-                    "Green offset",
-                    float_to_cstring(offset.y, text_buffer[:]),
-                    &offset.y,
-                    -0.1, 0.1,
-                )
-
-                raylib.GuiSliderBar(
-                    raylib.Rectangle{100, 100, 200, 20},
-                    "Blue offset",
-                    float_to_cstring(offset.z, text_buffer[:]),
-                    &offset.z,
-                    -0.1, 0.1,
-                )
-
-                raylib.GuiToggle(
-                    raylib.Rectangle{100, 130, 200, 20},
-                    "Chromatic Aberration",
-                    &chromatic_aberration_enabled,
-                )
-
-                raylib.GuiSliderBar(
-                    raylib.Rectangle{100, 190, 200, 20},
-                    "Diffuse Red",
-                    float_to_cstring(color_diffuse.x, text_buffer[:]),
-                    &color_diffuse.y,
-                    0, 1,
-                )
-
-                raylib.GuiSliderBar(
-                    raylib.Rectangle{100, 220, 200, 20},
-                    "Diffuse Green",
-                    float_to_cstring(color_diffuse.y, text_buffer[:]),
-                    &color_diffuse.z,
-                    0, 1,
-                )
-
-                raylib.GuiSliderBar(
-                    raylib.Rectangle{100, 250, 200, 20},
-                    "Diffuse Blue",
-                    float_to_cstring(color_diffuse.z, text_buffer[:]),
-                    &color_diffuse.w,
-                    0, 1,
-                )
-
-                raylib.GuiSliderBar(
-                    raylib.Rectangle{100, 280, 200, 20},
-                    "Diffuse Alpha",
-                    float_to_cstring(color_diffuse.w, text_buffer[:]),
-                    &color_diffuse.w,
-                    0, 1,
-                )
-
-                raylib.GuiToggle(
-                    raylib.Rectangle{100, 310, 200, 20},
-                    "Grayscale",
-                    &grayscale_enabled,
-                )
-
-                raylib.GuiToggle(
-                    raylib.Rectangle{100, 340, 200, 20},
-                    "Bloom",
-                    &bloom_enabled,
-                )
-
-                update_text_entry(
-                    &te,
-                    raylib.Rectangle{100, 370, 200, 20},
-                    "Label",
-                    10, 
-                    true,
-                )
+                draw_edit_menu()
             }
 
             if game_state == GameState.Paused {
@@ -292,12 +205,12 @@ main :: proc() {
 
                 raylib.DrawText("Press ESC to resume", window_center_x - 200, window_center_y + 50 - 100, 20, raylib.GRAY)
                 raylib.DrawText("Press TAB to enter edit mode", window_center_x - 200, window_center_y + 80 - 100, 20, raylib.GRAY)
-                raylib.DrawText("Press X to quit", window_center_x - 200, window_center_y + 110 - 100, 20, raylib.GRAY)
+                raylib.DrawText("Press Ctrl+Q to quit", window_center_x - 200, window_center_y + 110 - 100, 20, raylib.GRAY)
             }
         } raylib.EndDrawing()
 
         free_all(context.temp_allocator)
     }
 
-    raylib.CloseWindow()
+    free_all(context.allocator)
 }

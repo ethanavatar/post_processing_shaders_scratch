@@ -50,6 +50,10 @@ cstring_remove_at :: proc(
     allocator := context.allocator,
 ) -> cstring {
     if n >= len(cstr) || n < 0 { return cstr }
+    if n == 0 {
+        _, back := cstring_split_at(cstr, 1, context.allocator) 
+        return back
+    }
 
     front, b := cstring_split_at(cstr, n, context.allocator)
     defer free(cast(rawptr)front, context.allocator)
