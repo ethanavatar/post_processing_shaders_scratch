@@ -133,19 +133,19 @@ main :: proc() {
     window_texture = raylib.LoadRenderTexture(initial_width, initial_height)
     defer raylib.UnloadRenderTexture(window_texture)
 
-    chromatic_aberration = raylib.LoadShader(nil, "chromatic_aberration.frag")
+    chromatic_aberration = raylib.LoadShader(nil, "shaders/chromatic_aberration.frag")
     defer raylib.UnloadShader(chromatic_aberration)
 
     offset = raylib.Vector3{0.009, 0.006, -0.006}
     offset_location = raylib.GetShaderLocation(chromatic_aberration, "offset")
 
-    grayscale = raylib.LoadShader(nil, "grayscale.frag")
+    grayscale = raylib.LoadShader(nil, "shaders/grayscale.frag")
     defer raylib.UnloadShader(grayscale)
 
     color_diffuse = raylib.Vector4{0.5, 0.5, 0.5, 1}
     color_diffuse_location = raylib.GetShaderLocation(grayscale, "colorDiffuse")
 
-    bloom = raylib.LoadShader(nil, "bloom.frag")
+    bloom = raylib.LoadShader(nil, "shaders/bloom.frag")
     defer raylib.UnloadShader(bloom)
 
     for should_close == false && raylib.WindowShouldClose() == false {
@@ -183,7 +183,6 @@ main :: proc() {
 
         raylib.BeginDrawing(); {
             raylib.ClearBackground(raylib.RAYWHITE)
-
             raylib.DrawTexturePro(
                 canvas_texture.texture,
                 canvas_source, canvas_dest,
@@ -191,22 +190,8 @@ main :: proc() {
                 raylib.WHITE,
             )
 
-            if game_state == GameState.Editing {
-                draw_edit_menu()
-            }
-
-            if game_state == GameState.Paused {
-                raylib.DrawRectangle(0, 0, initial_width, initial_height, raylib.Fade(raylib.BLACK, 0.8))
-                text : cstring = "Paused"
-                text_center := raylib.MeasureText(text, 50) / 2
-                window_center_x : i32 = initial_width / 2
-                window_center_y : i32 = initial_height / 2
-                raylib.DrawText(text, window_center_x - text_center, window_center_y - 50 - 100, 50, raylib.WHITE)
-
-                raylib.DrawText("Press ESC to resume", window_center_x - 200, window_center_y + 50 - 100, 20, raylib.GRAY)
-                raylib.DrawText("Press TAB to enter edit mode", window_center_x - 200, window_center_y + 80 - 100, 20, raylib.GRAY)
-                raylib.DrawText("Press Ctrl+Q to quit", window_center_x - 200, window_center_y + 110 - 100, 20, raylib.GRAY)
-            }
+            if game_state == GameState.Editing { draw_edit_menu() }
+            if game_state == GameState.Paused  { draw_pause_menu() }
         } raylib.EndDrawing()
 
         free_all(context.temp_allocator)

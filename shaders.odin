@@ -63,3 +63,18 @@ shader_update_uniforms :: proc(
         )
     }
 }
+
+shader_process :: proc(
+    shader : ^Shader,
+) {
+    if !shader.enabled { return }
+    raylib.BeginShaderMode(shader.shader); {
+        shader_update_uniforms(shader)
+        raylib.DrawTextureRec(
+            canvas_texture.texture,
+            raylib.Rectangle{0, 0, cast(f32)canvas_width, -cast(f32)canvas_height},
+            raylib.Vector2{0, 0},
+            raylib.WHITE,
+        )
+    }; raylib.EndShaderMode()
+}
