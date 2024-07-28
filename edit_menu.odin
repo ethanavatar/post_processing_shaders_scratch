@@ -13,75 +13,75 @@ draw_edit_menu :: proc() {
     raylib.GuiSliderBar(
         raylib.Rectangle{100, 40, 200, 20},
         "Red offset",
-        float_to_cstring(offset.x, text_buffer[:]),
-        &offset.x,
+        float_to_cstring(aberration_offset.x, text_buffer[:]),
+        &aberration_offset.x,
         -0.1, 0.1,
     )
 
     raylib.GuiSliderBar(
         raylib.Rectangle{100, 70, 200, 20},
         "Green offset",
-        float_to_cstring(offset.y, text_buffer[:]),
-        &offset.y,
+        float_to_cstring(aberration_offset.y, text_buffer[:]),
+        &aberration_offset.y,
         -0.1, 0.1,
     )
 
     raylib.GuiSliderBar(
         raylib.Rectangle{100, 100, 200, 20},
         "Blue offset",
-        float_to_cstring(offset.z, text_buffer[:]),
-        &offset.z,
+        float_to_cstring(aberration_offset.z, text_buffer[:]),
+        &aberration_offset.z,
         -0.1, 0.1,
     )
 
     raylib.GuiToggle(
         raylib.Rectangle{100, 130, 200, 20},
         "Chromatic Aberration",
-        &chromatic_aberration_enabled,
+        &aberration_shader.enabled,
     )
 
     raylib.GuiSliderBar(
         raylib.Rectangle{100, 190, 200, 20},
         "Diffuse Red",
-        float_to_cstring(color_diffuse.x, text_buffer[:]),
-        &color_diffuse.y,
+        float_to_cstring(grayscale_color_diffuse.x, text_buffer[:]),
+        &grayscale_color_diffuse.x,
         0, 1,
     )
 
     raylib.GuiSliderBar(
         raylib.Rectangle{100, 220, 200, 20},
         "Diffuse Green",
-        float_to_cstring(color_diffuse.y, text_buffer[:]),
-        &color_diffuse.z,
+        float_to_cstring(grayscale_color_diffuse.y, text_buffer[:]),
+        &grayscale_color_diffuse.y,
         0, 1,
     )
 
     raylib.GuiSliderBar(
         raylib.Rectangle{100, 250, 200, 20},
         "Diffuse Blue",
-        float_to_cstring(color_diffuse.z, text_buffer[:]),
-        &color_diffuse.w,
+        float_to_cstring(grayscale_color_diffuse.z, text_buffer[:]),
+        &grayscale_color_diffuse.z,
         0, 1,
     )
 
     raylib.GuiSliderBar(
         raylib.Rectangle{100, 280, 200, 20},
         "Diffuse Alpha",
-        float_to_cstring(color_diffuse.w, text_buffer[:]),
-        &color_diffuse.w,
+        float_to_cstring(grayscale_color_diffuse.w, text_buffer[:]),
+        &grayscale_color_diffuse.w,
         0, 1,
     )
 
     raylib.GuiToggle(
         raylib.Rectangle{100, 310, 200, 20},
         "Grayscale",
-        &grayscale_enabled,
+        &grayscale_shader.enabled,
     )
 
     raylib.GuiToggle(
         raylib.Rectangle{100, 340, 200, 20},
         "Bloom",
-        &bloom_enabled,
+        &bloom_shader.enabled,
     )
 
     draw_text_entry(

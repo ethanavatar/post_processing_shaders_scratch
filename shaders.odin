@@ -67,7 +67,6 @@ shader_update_uniforms :: proc(
 shader_process :: proc(
     shader : ^Shader,
 ) {
-    if !shader.enabled { return }
     raylib.BeginShaderMode(shader.shader); {
         shader_update_uniforms(shader)
         raylib.DrawTextureRec(

@@ -1,6 +1,7 @@
 package main
 import "vendor:raylib"
 
+/*
 gui_draw_frag_shader_widget :: proc(
     shader : ^Shader,
     shader_name : string,
@@ -39,6 +40,7 @@ gui_draw_frag_shader_widget :: proc(
     )
     return 0;
 }
+*/
 
 /*
 gui_draw_uniform_widget :: proc(
